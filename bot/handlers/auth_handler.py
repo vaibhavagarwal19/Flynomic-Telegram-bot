@@ -83,14 +83,34 @@ async def handle_user_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif flow == "otp_verify":
         otp = update.message.text
         email = context.user_data["email"]
+
         response = verify_otp(email, otp)
+
+
 
         if "error" in response:
             await update.message.reply_text("❌ Invalid or expired OTP. Please try again.")
         else:
-            first_name = context.user_data.get("first_name", "Traveler")
-            context.user_data.clear()
-            await update.message.reply_text(f"🎉 Welcome, *{first_name}!* You're successfully logged in to *Flynomic* ✈️", parse_mode="Markdown")
+            # ✅ Save user session details for hotel and flight APIs
+            user = response.get("user", {})
+            token = response.get("accessToken")
+
+            context.user_data["logged_user_id"] = user.get("_id")
+            context.user_data["first_name"] = user.get("firstName", "Traveler")
+            context.user_data["access_token"] = token
+
+            first_name = context.user_data["first_name"]
+
+            # Clear only flow, not user session
+            context.user_data.pop("flow", None)
+            context.user_data.pop("mode", None)
+
+            await update.message.reply_text(
+                f"🎉 Welcome, *{first_name}!* You're successfully logged in to *Flynomic* ✈️\n\n"
+                "You can now search hotels using /hotels 🏨",
+                parse_mode="Markdown"
+            )
+
 
     # =============== Login Flow ===============
     elif flow == "login_email":

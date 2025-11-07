@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>🏨 Hotels - Flynomic</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background:#f5f7fa;
+      margin:0;
+      padding:20px;
+    }
+    h2 {
+      text-align:center;
+      color:#0078d7;
+      margin-bottom:20px;
+    }
+    .hotel-card {
+      background:#fff;
+      border-radius:12px;
+      padding:16px;
+      margin-bottom:20px;
+      box-shadow:0 4px 8px rgba(0,0,0,0.08);
+      transition:transform 0.2s ease;
+    }
+    .hotel-card:hover {
+      transform:translateY(-3px);
+    }
+    .hotel-card img {
+      width:100%;
+      border-radius:10px;
+      margin-bottom:12px;
+    }
+    .hotel-name {
+      font-size:18px;
+      font-weight:600;
+      color:#222;
+      margin-bottom:6px;
+    }
+    .hotel-category {
+      color:#888;
+      margin-bottom:6px;
+    }
+    .price {
+      color:#0088cc;
+      font-weight:bold;
+      font-size:16px;
+      margin-bottom:10px;
+    }
+    button {
+      width:100%;
+      padding:10px;
+      border:none;
+      border-radius:8px;
+      background:#0088cc;
+      color:white;
+      font-size:15px;
+      cursor:pointer;
+    }
+  </style>
+</head>
+<body>
+  <h2>🏨 Hotel Results</h2>
+  <div id="hotel-list">Loading hotels...</div>
+
+  <script>
+    const tg = Telegram.WebApp;
+    tg.expand();
+
+    const user = tg.initDataUnsafe?.user;
+    const userId = user ? user.id : null;
+
+    async function loadHotels() {
+      if (!userId) {
+        document.getElementById('hotel-list').innerHTML = "<p>⚠️ No user info found.</p>";
+        return;
+      }
+
+      try {
+        const res = await fetch(`http://localhost:8000/api/hotels/${userId}`);
+        const data = await res.json();
+        const hotels = data.hotels || [];
+
+        const list = document.getElementById("hotel-list");
+        list.innerHTML = "";
+
+        if (!hotels.length) {
+          list.innerHTML = "<p>No hotels found for your last search.</p>";
+          return;
+        }
+
+        hotels.slice(0,5).forEach(h => {
+          const img = h.thumbnailImage?.path
+            ? `https://photos.hotelbeds.com/giata/${h.thumbnailImage.path}`
+            : "https://via.placeholder.com/400x250?text=Hotel";
+
+          const name = h.name || "Unnamed Hotel";
+          const rating = h.categoryName || "Unrated";
+          const price = h.rooms?.[0]?.rates?.[0]?.net || "N/A";
+
+          const card = document.createElement("div");
+          card.className = "hotel-card";

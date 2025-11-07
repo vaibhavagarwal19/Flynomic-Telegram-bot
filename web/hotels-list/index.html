@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Hotels Near You 🏨 | Flynomic</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Available Hotels</h1>
+    <div id="hotels-container" class="hotels"></div>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const userId = params.get('user_id');
+    const place = params.get('place');
+    const checkIn = params.get('checkin');
+    const checkOut = params.get('checkout');
+
+    const requestData = {
+    stay: { checkIn, checkOut },
+    occupancies: [{ rooms: 1, adults: 1, children: 0, paxes: [] }],
+    geolocation: {
+        latitude: 25.2048493,
+        longitude: 55.2707828,
+        radius: 200,
+        unit: "km",
+        place: place || "Dubai - United Arab Emirates"
+    },
+    userId,
+    pageNo: 1,
+    limitVal: 50
+    };
+
+    async function fetchHotels() {
+      const res = await fetch("https://api.flynomic.com/hotels/search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(requestData)
+      });
+
+      const data = await res.json();
+      console.log(data);
+
+      const hotelsContainer = document.getElementById("hotels-container");
+      hotelsContainer.innerHTML = "";
+
+      (data.data || []).forEach(hotel => {
+        const div = document.createElement("div");
+        div.className = "hotel-card";
+        div.innerHTML = `
+          <img src="https://photos.hotelbeds.com/giata/${hotel.thumbnailImage.path}" alt="${hotel.name}" />
+          <h2>${hotel.name}</h2>
+          <p>${hotel.categoryName || ""}</p>
+          <p>⭐ ${hotel.ranking || "N/A"}</p>
+          <p>${hotel.address?.content || ""}</p>
+        `;
+        hotelsContainer.appendChild(div);
+      });
+    }
+
+    fetchHotels();
+  </script>
+</body>
+</html>
